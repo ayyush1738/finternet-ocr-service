@@ -81,11 +81,21 @@ async def analyze(req: OCRRequest):
             temp_pdf.write(content)
             temp_pdf_path = temp_pdf.name
 
+        PINATA_API_KEY = os.getenv("PINATA_API_KEY")
+        PINATA_API_SECRET = os.getenv("PINATA_API_SECRET")
+
         with open(temp_pdf_path, 'rb') as f:
-            response = requests.post('http://127.0.0.1:5001/api/v0/add', files={'file': f})
+            files = {
+                'file': (os.path.basename(temp_pdf_path), f)
+            }
+            headers = {
+                'pinata_api_key': PINATA_API_KEY,
+                'pinata_secret_api_key': PINATA_API_SECRET,
+            }
+            response = requests.post('https://api.pinata.cloud/pinning/pinFileToIPFS', files=files, headers=headers)
             response.raise_for_status()
             ipfs_result = response.json()
-            cid = ipfs_result['Hash']
+            cid = ipfs_result['IpfsHash']
             print("✅ Uploaded to IPFS:", cid)
 
         os.remove(temp_pdf_path)
